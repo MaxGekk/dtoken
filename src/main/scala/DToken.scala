@@ -1,3 +1,4 @@
+import com.databricks.Shard
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
 import org.libnetrc.{Machine, NetRcFile}
@@ -6,7 +7,8 @@ import scala.util.Try
 
 case class Config(
                    isInteractive: Boolean = false,
-                   shard: Option[String]
+                   shard: Option[String],
+                   list: Boolean = true
                  )
 
 object DToken extends StrictLogging {
@@ -17,6 +19,9 @@ object DToken extends StrictLogging {
       .text("shard's url to connect to")
       .valueName("string")
       .action((x, c) => c.copy(shard = Some(x)))
+
+    opt[Unit]('l', "list").action( (_, c) =>
+      c.copy(list = true) ).text("list all tokens")
 
     help("help")
     version("version")
@@ -30,11 +35,22 @@ object DToken extends StrictLogging {
     } else if (config.shard.isEmpty) {
       throw new IllegalArgumentException("Unknown shard name")
     } else {
-      val shard = config.shard.get
-      logger.debug(s"Looking for credentials for $shard")
+      val shardName = config.shard.get
+      logger.debug(s"Looking for credentials for $shardName")
       val netrc = NetRcFile.read
-      val Machine(_, login, password, _) = netrc.find(shard).get
-      logger.debug(s"Found login = $login for the shard: $shard")
+      val Machine(_, login, password, _) = netrc.find(shardName).get
+      logger.debug(s"Found login = $login for the shard: $shardName")
+
+      val shard = Shard(shardName)
+        .username(login).password(password)
+        .connect
+
+      if (config.list) {
+        val tokens = shard.token.list
+        println(s"Tokens at $shardName")
+        tokens foreach println
+        println(s"Total tokens: ${tokens.size}")
+      }
     }
   }
 

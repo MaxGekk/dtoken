@@ -12,7 +12,7 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "com.github.scopt" %% "scopt" % "3.7.0",
   "default" %% "libnetrc" % "1.1",
-  "default" %% "libricks" % "0.2"
+  "default" %% "libricks" % "0.3-SNAPSHOT"
 )
 
 enablePlugins(AssemblyPlugin)
